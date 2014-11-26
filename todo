@@ -1,0 +1,3 @@
+transpose ocaml into python. figure out a way to elegantly pattern match 
+in python, or a way to call a FP language script from 2048.py
+
