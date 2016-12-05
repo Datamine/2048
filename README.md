@@ -3,6 +3,10 @@
 This is a command-line version of [2048](http://gabrielecirulli.github.io/2048/). 
 Read the documentation [here](http://www.johnloeber.com/docs/2048.html).
 
+## Update Dec-4-2016
+
+Currently rewriting this script.
+
 ## Details
 
 - After cloning this repo, `cd` into it in your terminal, and type `python 2048.py` to run it.
