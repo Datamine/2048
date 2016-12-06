@@ -261,7 +261,7 @@ def newboard(board, move):
     newparts = [[], [], [], []]
 
     # cascading fold
-    for i in range(4):
+    for i in xrange(4):
         process_line = strip(parts[i])
         if len(process_line) == 0:
             continue
