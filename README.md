@@ -3,7 +3,7 @@
 This is a command-line version of [2048](http://gabrielecirulli.github.io/2048/). 
 There's a little more documentation [here on my site](http://www.johnloeber.com/docs/2048.html).
 
-![screenshot][http://johnloeber.com/images/gamescreenshot.png]
+![screenshot](http://johnloeber.com/images/gamescreenshot.png)
 
 ## Details
 
