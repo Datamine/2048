@@ -269,38 +269,38 @@ def newboard(board, move):
             newparts[i].append(process_line[0])
         elif len(process_line) == 2:
             if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
+                newparts[i].append(str(int(process_line[0]) * 2))
             else:
                 newparts[i].append(process_line[0])
                 newparts[i].append(process_line[1])
         elif len(process_line) == 3:
             if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
+                newparts[i].append(str(int(process_line[0]) * 2))
                 newparts[i].append(process_line[2])
             else:
                 newparts[i].append(process_line[0])
                 if process_line[1] == process_line[2]:
-                    newparts[i].append(str(int(process_line[1]) + int(process_line[2])))
+                    newparts[i].append(str(int(process_line[1]) * 2))
                 else:
                     newparts[i].append(process_line[1])
                     newparts[i].append(process_line[2])
         else:
             if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
+                newparts[i].append(str(int(process_line[0]) * 2))
                 if process_line[2] == process_line[3]:
-                    newparts[i].append(str(int(process_line[2]) + int(process_line[3])))
+                    newparts[i].append(str(int(process_line[2]) * 2))
                 else:
                     newparts[i].append(process_line[2])
                     newparts[i].append(process_line[3])
             else:
                 newparts[i].append(process_line[0])
                 if process_line[1] == process_line[2]:
-                    newparts[i].append(str(int(process_line[1]) + int(process_line[2])))
+                    newparts[i].append(str(int(process_line[1]) * 2))
                     newparts[i].append(process_line[3])
                 else:
                     newparts[i].append(process_line[1])
                     if process_line[2] == process_line[3]:
-                        newparts[i].append(str(int(process_line[2]) + int(process_line[3])))
+                        newparts[i].append(str(int(process_line[2]) * 2))
                     else:
                         newparts[i].append(process_line[2])
                         newparts[i].append(process_line[3])
