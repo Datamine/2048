@@ -1,9 +1,11 @@
 ## 2048 for the Command-Line
 
 This is a command-line version of [2048](http://gabrielecirulli.github.io/2048/). 
-There's a little more documentation [here on my site](http://www.johnloeber.com/docs/2048.html).
 
 ![screenshot](http://johnloeber.com/images/gamescreenshot.png)
+
+Try to get to 2048. On every turn, a new number, either 2 or 4, spawns. It is marked in bold. 
+If you're a vim-user, then you can also use `h, j, k, l` instead of the arrow keys.
 
 ## Details
 
