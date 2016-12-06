@@ -14,9 +14,9 @@ There's a little more documentation [here on my site](http://www.johnloeber.com/
 The core logic is currently in `newboard`, an enormously ugly function in which I hardcoded a cascading fold.
 However, I couldn't figure out a better alternative. The fold needs to satisfy the following properties:
 
-- Only do one step, i.e. `['16', '8', '8', '']` should collapse to `['16', '16', '', '']`, not `['32', '', '', '']`.
-- Work in the correct order: `['8', '8', '8', '']` should collapse to `['16', '8', '', '']`, not `['8', '16', '', '']`
-- Respects spacing, i.e. `['8', '', '8', '']` should collapse to `['8', '8', '', '']`.
+- Only do one step: `['16', '8', '8', '']` should collapse to `['16', '16', '', '']`, not `['32', '', '', '']`.
+- Respect order: `['8', '8', '8', '']` should collapse to `['16', '8', '', '']`, not `['8', '16', '', '']`
+- Respect spacing, i.e. `['8', '', '8', '']` should collapse to `['8', '8', '', '']`.
 
 I found it difficult to cook up an abstraction that elegantly handled all these criteria.
 
