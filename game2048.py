@@ -1,8 +1,10 @@
-# John Loeber | Python 2.7.8 | 15-Nov-2014 | www.johnloeber.com
-
+"""
+2048 game for the command line.
+John Loeber | Python 2.7.8 | 15-Nov-2014 | contact@johnloeber.com
+"""
 from copy import deepcopy
 from random import randint
-from os.path import expanduser, isfile
+from os.path import expanduser
 import locale
 import sys
 import curses
@@ -40,8 +42,8 @@ def get_max_score():
     retrieve max score from the score-file
     """
     try:
-        with open(SCORE_FILE_PATH, "r") as f:
-            return f.readlines()[1].rstrip('\n')
+        with open(SCORE_FILE_PATH, "r") as score_file:
+            return score_file.readlines()[1].rstrip('\n')
     except:
         # if the score-file is somehow corrupted or does not exist, create a new one
         write_max_score("0")
@@ -51,35 +53,33 @@ def write_max_score(score):
     """
     write max score to the score-file=
     """
-    with open(SCORE_FILE_PATH, "w") as f:
-        return f.write(MAX_SCORE_MESSAGE + score)
+    with open(SCORE_FILE_PATH, "w") as score_file:
+        return score_file.write(MAX_SCORE_MESSAGE + score)
 
-def get_move():
+def get_move(screen):
     """
     get the player's next move.
     if the move is invalid, flash an error to the game screen.
     """
-    global stdscr
     while True:
-        char = stdscr.getch()
+        char = screen.getch()
         command = KEY_OPTS.get(char)
         if char in KEY_OPTS:
             return command
         else:
-            stdscr.addstr(11, 5, "Not an arrow key! Try again.")
-            stdscr.refresh()
+            screen.addstr(11, 5, "Not an arrow key! Try again.")
+            screen.refresh()
 
-def another_game():
+def another_game(screen):
     """
     when the game is over, ask the player if they want another game.
     """
-    global stdscr
-    stdscr.move(10, 0)
-    stdscr.clrtoeol()
-    stdscr.addstr(10, 5, "Game Over! Press 't' to try again.")
-    stdscr.refresh()
+    screen.move(10, 0)
+    screen.clrtoeol()
+    screen.addstr(10, 5, "Game Over! Press 't' to try again.")
+    screen.refresh()
     while True:
-        char = stdscr.getch()
+        char = screen.getch()
         command = KEY_OPTS.get(char)
         if command == "quit":
             stop()
@@ -91,12 +91,13 @@ class Game(object):
     represents a 2048 game board
     """
 
-    def __init__(self):
+    def __init__(self, screen):
         self.board = []
         self.win = False
         self.new_coord = []
         self.max_score = get_max_score()
         self.score = "0"
+        self.screen = screen
 
         self.make_blank_board()
         return
@@ -132,10 +133,12 @@ class Game(object):
         there are marginally more efficient ways we could do this: e.g. not
         clear the entire screen but rather just refresh certain characters.
         """
-        global stdscr
-        stdscr.erase()
-        stdscr.addstr(2, 5, "Documentation is at www.johnloeber.com/docs/2048.html."
-                            "\n     Press 'q' to quit.")
+        self.screen.erase()
+        self.screen.addstr(
+            2, 5,
+            "Documentation is at www.johnloeber.com/docs/2048.html."
+            "\n     Press 'q' to quit."
+        )
 
         # create the strings to represent the current items on the board
         max_len = max(len(i) for i in self.board)
@@ -152,24 +155,24 @@ class Game(object):
             to_write = ""
             for cell_index in row:
                 to_write += board_copy[cell_index]
-            stdscr.addstr(row_index+5, 5, to_write)
+            self.screen.addstr(row_index+5, 5, to_write)
 
         # writes the new coordinates in bold, over the current board.
         for i in self.new_coord:
             row = i / 4
             entry = (i % 4) * len(board_copy[i])
-            stdscr.addstr(row+5, entry+5, board_copy[i], curses.A_BOLD)
+            self.screen.addstr(row+5, entry+5, board_copy[i], curses.A_BOLD)
 
         # if the user has won, write a congratulatory message
         if self.win:
             win_message = "Congratulations, you win! Keep playing if you wish."
-            stdscr.addstr(10, 5, win_message)
+            self.screen.addstr(10, 5, win_message)
 
         # write the current and max scores
-        stdscr.addstr(3, 46 - len(self.max_score), "Best Score: " + self.max_score)
-        stdscr.addstr(4, 43 - len(self.score), "Current Score: " + self.score)
+        self.screen.addstr(3, 46 - len(self.max_score), "Best Score: " + self.max_score)
+        self.screen.addstr(4, 43 - len(self.score), "Current Score: " + self.score)
 
-        stdscr.refresh()
+        self.screen.refresh()
         return
 
     def spawn(self):
@@ -190,7 +193,7 @@ class Game(object):
 
     def has_lost(self):
         """
-        returns True if the user has lost.
+        returns True if the user has lost, False otherwise.
         """
         # if a square is empty, then the game is still going on.
         if '' in self.board:
@@ -199,10 +202,7 @@ class Game(object):
         possible_moves = ["up", "down", "left", "right"]
         next_possible_game_states = [newboard(self.board, move) for move in possible_moves]
         # if all next possible game states are the same as the current, then game over.
-        if all(game_state == self.board for game_state in next_possible_game_states):
-            return True
-        else:
-            return False
+        return all(game_state == self.board for game_state in next_possible_game_states)
 
 def strip(items):
     """
@@ -213,98 +213,107 @@ def strip(items):
 
 def weave(list1, list2, list3, list4):
     """
-    newboard helper:
-    no idea.
+    newboard helper: collapses a list of columns into a flat, row-order list.
     """
-    x = []
-    for i in range(0, 4):
-        for j in [list1, list2, list3, list4]:
-            x.append(j[i])
-    return x
+    return_list = []
+    for i in xrange(0, 4):
+        for column in [list1, list2, list3, list4]:
+            return_list.append(column[i])
+    return return_list
 
-def fill(l):
+def fill(list_):
     """
-    newboard helper.
-    no idea.
+    newboard helper: pads a list with extra empty strings until its length is 4.
     """
-    if len(l)<4:
-        l += ['']*(4-len(l))
-    return l
+    list_ += [''] * (4 - len(list_))
+    return list_
 
-def newboard(board,move):
-    # process a move, and return the consequent state of the board.
-    if move=="quit":
-        stop()
-    elif move=="up" or move=="down":
-        parts = [[board[0],board[4],board[8],board[12]],
-                 [board[1],board[5],board[9],board[13]],
-                 [board[2],board[6],board[10],board[14]],
-                 [board[3],board[7],board[11],board[15]]]
+def newboard(board, move):
+    """
+    process a move, return the resultant board.
+    """
+    # the operation on the board will resemble a fold that collapses + sums
+    # the rows on the board. It's possible to do this fold in four directions.
+    # we write the fold for one direction only, and set up the parts of the
+    # board (i.e. via reflection/rotation) such that the fold in
+    # one direction mimics the desired fold.
+
+    # set up the parts of the board that we will fold: either
+    # as columns (up/down) or as rows (left/right)
+    if move == "up" or move == "down":
+        parts = [[board[0], board[4], board[8], board[12]],
+                 [board[1], board[5], board[9], board[13]],
+                 [board[2], board[6], board[10], board[14]],
+                 [board[3], board[7], board[11], board[15]]]
     else:
         parts = [board[0:4],
                  board[4:8],
                  board[8:12],
                  board[12:16]]
-    # i'll be "folding" the sublists, so i'm now arranging them to have them
-    # cascade properly.
-    if move=="down" or move=="right":
-        for x in range(len(parts)):
-            parts[x] = parts[x][::-1]
-            # all folds will go left (or up), hence the need to reverse lists
-    newparts = [[],[],[],[]]
-    # and here the cascading fold begins.
+
+    # we will fold the sublist in the up/left direction, so if the move is
+    # down/right, we invert the order of the parts.
+    if move == "down" or move == "right":
+        for index, _ in enumerate(parts):
+            parts[index] = parts[index][::-1]
+
+    # new list that we will populate with the folded elements
+    newparts = [[], [], [], []]
+
+    # cascading fold
     for i in range(4):
-        newl = strip(parts[i])
-        if len(newl)==0:
+        process_line = strip(parts[i])
+        if len(process_line) == 0:
             continue
-        elif len(newl)==1:
-            newparts[i].append(newl[0])
-        elif len(newl)==2:
-            if newl[0]==newl[1]:
-                newparts[i].append(str(int(newl[0])+int(newl[1])))
+        elif len(process_line) == 1:
+            newparts[i].append(process_line[0])
+        elif len(process_line) == 2:
+            if process_line[0] == process_line[1]:
+                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
             else:
-                newparts[i].append(newl[0])
-                newparts[i].append(newl[1])
-        elif len(newl)==3:
-            if newl[0]==newl[1]:
-                newparts[i].append(str(int(newl[0])+int(newl[1])))
-                newparts[i].append(newl[2])
+                newparts[i].append(process_line[0])
+                newparts[i].append(process_line[1])
+        elif len(process_line) == 3:
+            if process_line[0] == process_line[1]:
+                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
+                newparts[i].append(process_line[2])
             else:
-                newparts[i].append(newl[0])
-                if newl[1]==newl[2]:
-                    newparts[i].append(str(int(newl[1])+int(newl[2])))
+                newparts[i].append(process_line[0])
+                if process_line[1] == process_line[2]:
+                    newparts[i].append(str(int(process_line[1]) + int(process_line[2])))
                 else:
-                    newparts[i].append(newl[1])
-                    newparts[i].append(newl[2])
+                    newparts[i].append(process_line[1])
+                    newparts[i].append(process_line[2])
         else:
-            if newl[0]==newl[1]:
-                newparts[i].append(str(int(newl[0])+int(newl[1])))
-                if newl[2]==newl[3]:
-                    newparts[i].append(str(int(newl[2])+int(newl[3])))
+            if process_line[0] == process_line[1]:
+                newparts[i].append(str(int(process_line[0]) + int(process_line[1])))
+                if process_line[2] == process_line[3]:
+                    newparts[i].append(str(int(process_line[2]) + int(process_line[3])))
                 else:
-                    newparts[i].append(newl[2])
-                    newparts[i].append(newl[3])
+                    newparts[i].append(process_line[2])
+                    newparts[i].append(process_line[3])
             else:
-                newparts[i].append(newl[0])
-                if newl[1]==newl[2]:
-                    newparts[i].append(str(int(newl[1])+int(newl[2])))
-                    newparts[i].append(newl[3])
+                newparts[i].append(process_line[0])
+                if process_line[1] == process_line[2]:
+                    newparts[i].append(str(int(process_line[1]) + int(process_line[2])))
+                    newparts[i].append(process_line[3])
                 else:
-                    newparts[i].append(newl[1])
-                    if newl[2]==newl[3]:
-                        newparts[i].append(str(int(newl[2])+int(newl[3])))
+                    newparts[i].append(process_line[1])
+                    if process_line[2] == process_line[3]:
+                        newparts[i].append(str(int(process_line[2]) + int(process_line[3])))
                     else:
-                        newparts[i].append(newl[2])
-                        newparts[i].append(newl[3])
-    for x in range(4):
-        newparts[x] = fill(newparts[x])
-    if move=="up":
-        return weave(newparts[0],newparts[1],newparts[2],newparts[3])
-    elif move=="down":
-        return weave(newparts[0][::-1],newparts[1][::-1],newparts[2][::-1],newparts[3][::-1])
-    elif move=="right":
+                        newparts[i].append(process_line[2])
+                        newparts[i].append(process_line[3])
+    for index in xrange(4):
+        newparts[index] = fill(newparts[index])
+    if move == "up":
+        return weave(newparts[0], newparts[1], newparts[2], newparts[3])
+    elif move == "down":
+        return weave(newparts[0][::-1], newparts[1][::-1], newparts[2][::-1], newparts[3][::-1])
+    elif move == "right":
         return newparts[0][::-1] + newparts[1][::-1] + newparts[2][::-1] + newparts[3][::-1]
     else:
+        # flatten list
         return [x for sublist in newparts for x in sublist]
 
 def stop():
@@ -313,13 +322,17 @@ def stop():
     """
     sys.exit(0)
 
-def game_loop():
+def game_loop(screen):
     """
-    self-explanatory
+    handles gameplay
     """
+
+    # hide the cursor
+    curses.curs_set(0)
+
     while True:
         # this loop allows multiple games
-        game = Game()
+        game = Game(screen)
 
         while True:
             # this loop allows multiple moves within one game
@@ -327,14 +340,14 @@ def game_loop():
             game.new_coord = []
 
             if game.has_lost():
-                if another_game():
+                if another_game(screen):
                     # returns us to the upper-level game loop
                     break
 
             new_board = game.board
             while (new_board == game.board):
                 # get new moves until one of them actually changes the game state
-                move = get_move()
+                move = get_move(screen)
                 if move == "quit":
                     stop()
                 elif move == "try-again":
@@ -352,14 +365,6 @@ def game_loop():
 
             game.update_score()
 
-def main(screen):
-    locale.setlocale(locale.LC_ALL, '')
-    global stdscr
-    stdscr=curses.initscr()
-    curses.cbreak()
-    stdscr.keypad(1)
-    curses.curs_set(0)
-    game_loop()
-
 if __name__ == '__main__':
-    curses.wrapper(main)
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(game_loop)
