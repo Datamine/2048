@@ -12,7 +12,7 @@ There's a little more documentation [here on my site](http://www.johnloeber.com/
 - The game tries to save your top score in a file in your home directory: `~/.2048.txt`.
 
 The core logic is currently in `newboard`, an enormously ugly function in which I hardcoded a cascading fold.
-However, I couldn't figure out a better alternative. The fold needs to satisfy the following properties:
+However, I couldn't figure out a better alternative. The (left-direction) fold needs to satisfy the following properties:
 
 - Only do one step: `['16', '8', '8', '']` should collapse to `['16', '16', '', '']`, not `['32', '', '', '']`.
 - Respect order: `['8', '8', '8', '']` should collapse to `['16', '8', '', '']`, not `['8', '16', '', '']`
