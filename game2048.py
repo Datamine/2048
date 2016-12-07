@@ -216,21 +216,21 @@ def newboard(board, move):
         nboard[i%width].append(board[i])
     board = nboard
     height = len(board[0])
+
     # assign direction vectors and starting points for traversals
     if move == "up":
-        direc = (0,1)
-        spoints = [(x,0) for x in xrange(len(board))]
+        direc = (0, 1)
+        spoints = [(x, 0) for x in xrange(len(board))]
     elif move == "down":
-        direc = (0,-1)
+        direc = (0, -1)
         spoints = [(x,height-1) for x in xrange(len(board))]
     elif move == "left":
-        direc = (1,0)
-        spoints = [(0,y) for y in xrange(len(board[0]))]
+        direc = (1, 0)
+        spoints = [(0, y) for y in xrange(len(board[0]))]
     elif move == "right":
-        direc = (-1,0)
+        direc = (-1, 0)
         spoints = [(width-1, y) for y in xrange(len(board[0]))]
-    else:
-        raise RunTimeException("bad move '{0}' handed to newboard".format(move))
+
     # perform a traversal for each row or column
     for currpos in spoints:
         # collect a list of every coordinate in the row/column
@@ -238,8 +238,10 @@ def newboard(board, move):
         while inboard(board, *currpos):
             vec.append(currpos)
             currpos = (currpos[0]+direc[0], currpos[1]+direc[1])
+
         # collect all the non-zero numbers in the row
         vals = [board[c[0]][c[1]] for c in vec if board[c[0]][c[1]] != ""]
+
         # squish tiles together, but be careful to
         # only do it once per block
         i = 0
@@ -248,11 +250,13 @@ def newboard(board, move):
                 vals[i] = str(2*int(vals[i]))
                 del vals[i+1]
             i += 1
+
         # all the numbers slide the maximum amount, so we
         # fill with empty tiles at the end
         vals = vals + [""] * (width-len(vals))
         for val, coord in zip(vals, vec):
             board[coord[0]][coord[1]] = val
+
     # translate back to 1d form
     rboard = []
     for y in xrange(height):
@@ -261,6 +265,9 @@ def newboard(board, move):
     return rboard
 
 def inboard(board, x, y):
+    """
+    helper to test if a given coordinate is in the 2d board
+    """
     if x < 0 or y < 0:
         return False
     try:
