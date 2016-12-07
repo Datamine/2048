@@ -205,30 +205,6 @@ class Game(object):
         # if all next possible game states are the same as the current, then game over.
         return all(game_state == self.board for game_state in next_possible_game_states)
 
-def strip(items):
-    """
-    newboard helper:
-    filters a list, returns the items that aren't the empty string, in order.
-    """
-    return [item for item in items if item != '']
-
-def weave(list1, list2, list3, list4):
-    """
-    newboard helper: collapses a list of columns into a flat, row-order list.
-    """
-    return_list = []
-    for i in xrange(0, 4):
-        for column in [list1, list2, list3, list4]:
-            return_list.append(column[i])
-    return return_list
-
-def fill(list_):
-    """
-    newboard helper: pads a list with extra empty strings until its length is 4.
-    """
-    list_ += [''] * (4 - len(list_))
-    return list_
-
 def newboard(board, move):
     """
     process a move, return the resultant board.
