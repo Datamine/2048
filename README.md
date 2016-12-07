@@ -21,5 +21,3 @@ However, I couldn't figure out a better alternative. The (left-direction) fold n
 - Respect spacing, i.e. `['8', '', '8', '']` should collapse to `['8', '8', '', '']`.
 
 I found it difficult to cook up an abstraction that elegantly handled all these criteria.
-
-[Geoff Shannon](http://github.com/RadicalZephyr) supplied an alternative function, `use-later/fold.ml`.
