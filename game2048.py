@@ -8,6 +8,7 @@ from os.path import expanduser
 import locale
 import sys
 import curses
+from math import sqrt
 
 # path to file where we store the max score
 SCORE_FILE_PATH = expanduser("~/.2048.txt")
@@ -232,89 +233,65 @@ def newboard(board, move):
     """
     process a move, return the resultant board.
     """
-    # the operation on the board will resemble a fold that collapses + sums
-    # the rows on the board. It's possible to do this fold in four directions.
-    # we write the fold for one direction only, and set up the parts of the
-    # board (i.e. via reflection/rotation) such that the fold in
-    # one direction mimics the desired fold.
-
-    # set up the parts of the board that we will fold: either
-    # as columns (up/down) or as rows (left/right)
-    if move == "up" or move == "down":
-        parts = [[board[0], board[4], board[8], board[12]],
-                 [board[1], board[5], board[9], board[13]],
-                 [board[2], board[6], board[10], board[14]],
-                 [board[3], board[7], board[11], board[15]]]
-    else:
-        parts = [board[0:4],
-                 board[4:8],
-                 board[8:12],
-                 board[12:16]]
-
-    # we will fold the sublist in the up/left direction, so if the move is
-    # down/right, we invert the order of the parts.
-    if move == "down" or move == "right":
-        for index, _ in enumerate(parts):
-            parts[index] = parts[index][::-1]
-
-    # new list that we will populate with the folded elements
-    newparts = [[], [], [], []]
-
-    # cascading fold
-    for i in xrange(4):
-        process_line = strip(parts[i])
-        if len(process_line) == 0:
-            continue
-        elif len(process_line) == 1:
-            newparts[i].append(process_line[0])
-        elif len(process_line) == 2:
-            if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) * 2))
-            else:
-                newparts[i].append(process_line[0])
-                newparts[i].append(process_line[1])
-        elif len(process_line) == 3:
-            if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) * 2))
-                newparts[i].append(process_line[2])
-            else:
-                newparts[i].append(process_line[0])
-                if process_line[1] == process_line[2]:
-                    newparts[i].append(str(int(process_line[1]) * 2))
-                else:
-                    newparts[i].append(process_line[1])
-                    newparts[i].append(process_line[2])
-        else:
-            if process_line[0] == process_line[1]:
-                newparts[i].append(str(int(process_line[0]) * 2))
-                if process_line[2] == process_line[3]:
-                    newparts[i].append(str(int(process_line[2]) * 2))
-                else:
-                    newparts[i].append(process_line[2])
-                    newparts[i].append(process_line[3])
-            else:
-                newparts[i].append(process_line[0])
-                if process_line[1] == process_line[2]:
-                    newparts[i].append(str(int(process_line[1]) * 2))
-                    newparts[i].append(process_line[3])
-                else:
-                    newparts[i].append(process_line[1])
-                    if process_line[2] == process_line[3]:
-                        newparts[i].append(str(int(process_line[2]) * 2))
-                    else:
-                        newparts[i].append(process_line[2])
-                        newparts[i].append(process_line[3])
-    for index in xrange(4):
-        newparts[index] = fill(newparts[index])
+    # convert given board to 2d representation
+    width = int(sqrt(len(board)))
+    nboard = [[] for i in xrange(width)]
+    for i in xrange(len(board)):
+        nboard[i%width].append(board[i])
+    board = nboard
+    height = len(board[0])
+    # assign direction vectors and starting points for traversals
     if move == "up":
-        return weave(newparts[0], newparts[1], newparts[2], newparts[3])
+        direc = (0,1)
+        spoints = [(x,0) for x in xrange(len(board))]
     elif move == "down":
-        return weave(newparts[0][::-1], newparts[1][::-1], newparts[2][::-1], newparts[3][::-1])
+        direc = (0,-1)
+        spoints = [(x,height-1) for x in xrange(len(board))]
+    elif move == "left":
+        direc = (1,0)
+        spoints = [(0,y) for y in xrange(len(board[0]))]
     elif move == "right":
-        return newparts[0][::-1] + newparts[1][::-1] + newparts[2][::-1] + newparts[3][::-1]
+        direc = (-1,0)
+        spoints = [(width-1, y) for y in xrange(len(board[0]))]
     else:
-        # flatten list
-        return [x for sublist in newparts for x in sublist]
+        raise RunTimeException("bad move '{0}' handed to newboard".format(move))
+    # perform a traversal for each row or column
+    for currpos in spoints:
+        # collect a list of every coordinate in the row/column
+        vec = []
+        while inboard(board, *currpos):
+            vec.append(currpos)
+            currpos = (currpos[0]+direc[0], currpos[1]+direc[1])
+        # collect all the non-zero numbers in the row
+        vals = [board[c[0]][c[1]] for c in vec if board[c[0]][c[1]] != ""]
+        # squish tiles together, but be careful to
+        # only do it once per block
+        i = 0
+        while i < len(vals)-1:
+            if vals[i] == vals[i+1] and vals[i] != "":
+                vals[i] = str(2*int(vals[i]))
+                del vals[i+1]
+            i += 1
+        # all the numbers slide the maximum amount, so we
+        # fill with empty tiles at the end
+        vals = vals + [""] * (width-len(vals))
+        for val, coord in zip(vals, vec):
+            board[coord[0]][coord[1]] = val
+    # translate back to 1d form
+    rboard = []
+    for y in xrange(height):
+        for x in xrange(width):
+            rboard.append(board[x][y])
+    return rboard
+
+def inboard(board, x, y):
+    if x < 0 or y < 0:
+        return False
+    try:
+        board[x][y]
+        return True
+    except IndexError:
+        return False
 
 def stop():
     """
